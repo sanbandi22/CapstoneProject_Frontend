@@ -1,0 +1,114 @@
+import React from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
+
+const ViewCart = (props) => {
+    const [cart, setCart] = useState([]);
+    const [total, setTotal] = useState(0);
+    const LoginId = localStorage.getItem("LoginId");
+
+    const { userid } = props;
+
+    useEffect(() => {
+        const getData = async () => {
+            try {
+                const res = await axios.get(`http://localhost:5185/api/Cart/GetCartByUserId?id=${LoginId}`);
+                setCart(res.data)
+            }
+            catch (error) {
+                console.log(error);
+            }
+        };
+        getData();
+        TotalPrice();
+    }, []);
+
+    const handleRemove = async (y) => {
+        try {
+            await axios.delete(`http://localhost:5185/api/Cart/DeleteCarts?id=${y}`);
+            const res = await axios.get(`http://localhost:5185/api/Cart/GetCartByUserId?id=${LoginId}`);
+            setCart(res.data);
+        }
+        catch (error) {
+            console.log(error);
+        }
+    }
+
+    const handleEmptyCart = async () => {
+        try {
+            await axios.delete("http://localhost:5185/api/Cart/EmptyCart");
+            setCart([]);
+            TotalPrice();
+        }
+        catch (error) {
+            console.log(error);
+        }
+    }
+
+    const TotalPrice = async () => {
+        var sum = 0
+        cart.map(item => (
+            sum = sum + item.price
+        ))
+        setTotal(sum)
+    }
+
+
+    return (
+        <div>
+            {cart.length != 0 && (
+                <>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Cart Id</th>
+                            <th>Medicine Name</th>
+                            <th>Price</th>
+                            <th>Seller</th>
+                            <th>Status</th>
+                            <th>Sub Total</th>
+                            <th>Options</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {cart.map(item => (
+                            <tr key={item.cartId}>
+                                <td>{item.cartId}</td>
+                                <td>{item.name}</td>
+                                <td>{item.price}</td>
+                                <td>{item.seller}</td>
+                                <td>{item.status}</td>
+                                <td><span style={{ fontWeight: 'bold' }}  >{item.price}</span></td>
+                                <td><button className="btn" style={{backgroundColor:'black',color:'white'}} onClick={() => handleRemove(item.cartId)}>REMOVE ITEM</button></td>
+                            </tr>
+                        ))}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5"><span style={{ fontWeight: 'bold' }}>Total Amount:</span></td>
+                            <td><span style={{ fontWeight: 'bold' }}>{total}</span></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <Link to='/viewmedicines' className="btn" style={{backgroundColor:"#4681f4",color:"white"}} >Back</Link> &nbsp;
+                <button className="btn btn-danger" onClick={() => handleEmptyCart()}>Empty Cart</button>&nbsp;
+                <Link to='/checkout' className="btn btn-secondary" >Check Out</Link> &nbsp;
+                </>
+            )}
+            {cart.length == 0 && (
+                <>
+                    <img src='https://mir-s3-cdn-cf.behance.net/projects/404/95974e121862329.Y3JvcCw5MjIsNzIxLDAsMTM5.png' width={60 + '%'} height={500 + 'px'} />
+                    <br></br>
+                    <br/>
+                    <Link to='/viewmedicines' className="btn btn-info" >Back to Medicines</Link> &nbsp;
+
+                </>
+            )}
+
+            
+        </div>
+    )
+}
+
+export default ViewCart;
